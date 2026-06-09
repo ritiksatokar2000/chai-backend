@@ -4,7 +4,7 @@ import bcrypt from "bcrypt"
 
 const userSchema = new mongoose.Schema(
   {
-    usename:{
+    username:{
       type:String,
       required:true,
       unique:true,
@@ -32,10 +32,10 @@ const userSchema = new mongoose.Schema(
     coverImage:{
       type:String// cloudinary url
     },
-    watchHistory:{
+    watchHistory:[{
       type:mongoose.Schema.Types.ObjectId,
       ref:"Video"
-    },
+    }],
     password:{
       type:String,
       required:true,
@@ -47,11 +47,10 @@ const userSchema = new mongoose.Schema(
     timestamps:true
   }
 )
-userSchema.pre("save",async function (next) {
+userSchema.pre("save",async function () {
   if(!this.isModified("password")) return next();
 
-  this.password= bcrypt.hash(this.password,10)
-  next();
+  this.password= await bcrypt.hash(this.password,10);
 })
 
 userSchema.methods.isPasswordCorrect=async function (password){
@@ -60,7 +59,7 @@ userSchema.methods.isPasswordCorrect=async function (password){
 
 userSchema.methods.generateAccessToken = function() {
   return jwt.sign({
-    _id = this.id,
+    _id : this.id,
     email:this.email,
     username:this.username,
     fullname:this.fullname
@@ -74,7 +73,7 @@ userSchema.methods.generateAccessToken = function() {
 
 userSchema.methods.generateRefreshToken = function() {
   return jwt.sign({
-    _id = this.id, 
+    _id : this.id, 
   },
   process.env.REFRESH_TOKEN_SECRET,
   {
